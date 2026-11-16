@@ -1,0 +1,95 @@
+{
+  "project": "shop-microservices",
+  "environments": {
+    "test": {
+      "username": "deploy",
+      "auth": { "type": "password", "password": "change-me" },
+      "sudo": false,
+      "type": "services",
+      "continueOnError": false,
+      "parallel": true,
+      "concurrency": 4,
+      "remote": {
+        "stagingDir": "/tmp/dsh-deploy",
+        "backupMode": "tar",
+        "backupCompress": false,
+        "backupKeep": 10,
+        "backupExclude": ["logs", "*.log", "nohup.out", "tmp", "cache", "*.pid"],
+        "stopCommand": "systemctl stop {{service}}",
+        "startCommand": "systemctl start {{service}}",
+        "statusCommand": "systemctl is-active {{service}}"
+      },
+      "services": [
+        {
+          "name": "user-service",
+          "host": "192.168.1.10",
+          "build": { "command": "mvn clean package -DskipTests", "cwd": "services/user-service" },
+          "artifacts": [{ "local": "services/user-service/target/user.jar", "remote": "user.jar" }],
+          "instances": [
+            {
+              "host": "192.168.1.10",
+              "remote": { "deployDir": "/opt/user-service", "backupDir": "/opt/backups/user-service" }
+            },
+            {
+              "host": "192.168.1.11",
+              "remote": { "deployDir": "/opt/user-service", "backupDir": "/opt/backups/user-service" }
+            }
+          ],
+          "remote": {
+            "healthCheck": { "type": "http", "url": "http://127.0.0.1:18080/actuator/health", "expectedStatus": "200", "retries": 12, "intervalSec": 5, "timeoutSec": 5 }
+          }
+        },
+        {
+          "name": "order-service",
+          "host": "192.168.1.10",
+          "build": { "command": "mvn clean package -DskipTests", "cwd": "services/order-service" },
+          "artifacts": [{ "local": "services/order-service/target/order.jar", "remote": "order.jar" }],
+          "remote": {
+            "deployDir": "/opt/order-service",
+            "backupDir": "/opt/backups/order-service",
+            "scripts": {
+              "dir": "bin",
+              "start": "start.sh",
+              "stop": "stop.sh",
+              "status": "status.sh",
+              "autoGenerate": { "jar": "order.jar", "javaOpts": "-Xms512m -Xmx1g", "logFile": "logs/order.log", "pidFile": "order.pid" }
+            },
+            "stopCommand": "systemctl stop order-service",
+            "startCommand": "systemctl start order-service",
+            "healthCheck": { "type": "http", "url": "http://127.0.0.1:18081/actuator/health", "expectedStatus": "200", "retries": 12, "intervalSec": 5, "timeoutSec": 5 }
+          }
+        },
+        {
+          "name": "payment-service",
+          "host": "192.168.1.20",
+          "port": 22,
+          "username": "deploy2",
+          "auth": { "type": "key", "privateKey": "C:/Users/you/.ssh/id_ed25519", "passphrase": "" },
+          "build": { "command": "mvn clean package -DskipTests", "cwd": "services/payment-service" },
+          "artifacts": [{ "local": "services/payment-service/target/payment.jar", "remote": "payment.jar" }],
+          "remote": {
+            "deployDir": "/opt/payment-service",
+            "backupDir": "/opt/backups/payment-service",
+            "healthCheck": { "type": "command", "command": "systemctl is-active payment-service", "retries": 10, "intervalSec": 3, "timeoutSec": 10 }
+          }
+        },
+        {
+          "name": "admin-web",
+          "host": "192.168.1.20",
+          "type": "frontend",
+          "build": { "command": "npm run build", "cwd": "apps/admin-web" },
+          "package": { "local": "apps/admin-web/dist", "remoteName": "admin-web.zip" },
+          "remote": {
+            "deployDir": "/usr/share/nginx/html/admin",
+            "backupDir": "/opt/backups/admin-web",
+            "stopCommand": "",
+            "startCommand": "",
+            "clean": false,
+            "unzipTool": "auto",
+            "healthCheck": { "type": "http", "url": "http://127.0.0.1/admin/index.html", "expectedStatus": "200", "retries": 6, "intervalSec": 3, "timeoutSec": 5 }
+          }
+        }
+      ]
+    }
+  }
+}

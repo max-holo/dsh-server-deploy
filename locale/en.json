@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "App Deploy",
+    "description": "One-click deploys to any environment (test/uat/prod) for single-service, frontend, microservices and cluster projects: build, upload, backup, restart and health check, with a live deployment panel in the right sidebar."
+  }
+}

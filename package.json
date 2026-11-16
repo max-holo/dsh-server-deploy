@@ -1,0 +1,56 @@
+{
+  "name": "dsh-server-deploy",
+  "version": "1.2.0",
+  "description": "DSH plugin bundle: one-click server deployment to any environment for single-service, frontend, microservices and cluster projects (per-service servers, zero local runtime deps) plus a right-side deployment status panel.",
+  "license": "MIT",
+  "author": "max",
+  "icon": "./icon.svg",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "bundle",
+    "deploy",
+    "deployment",
+    "ssh",
+    "sftp",
+    "test-server",
+    "microservices"
+  ],
+  "type": "commonjs",
+  "main": "host.cjs",
+  "exports": {
+    ".": "./host.cjs",
+    "./client": "./lib/client.js",
+    "./icon": "./icon.svg",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "ssh2": "^1.16.0"
+  },
+  "engines": {
+    "dsh": ">=0.2.2-0 <0.3.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [],
+      "external": []
+    }
+  },
+  "files": [
+    "host.cjs",
+    "engine.cjs",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "icon.svg",
+    "locale/*.json",
+    "package.json"
+  ]
+}
+

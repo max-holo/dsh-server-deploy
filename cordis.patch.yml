@@ -1,0 +1,6 @@
+# dsh-deploy bundle patch layer: inserts one row into the composed tree.
+# The package's node half (host.cjs) registers the global deployment tools and
+# the status route; its dsh.client declaration contributes the browser panel.
+- insert:
+    - id: dsh-deploy
+      name: dsh-server-deploy

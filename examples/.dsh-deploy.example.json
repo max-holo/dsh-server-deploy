@@ -1,0 +1,73 @@
+{
+  "project": "crm-java",
+  "environments": {
+    "test-backend": {
+      "host": "192.168.1.10",
+      "port": 22,
+      "username": "deploy",
+      "auth": { "type": "password", "password": "change-me" },
+      "sudo": false,
+      "type": "backend",
+      "build": { "command": "mvn clean package -DskipTests", "cwd": "" },
+      "artifacts": [
+        { "local": "target/crm.jar", "remote": "crm.jar" },
+        { "local": "conf/application.yml", "remote": "conf/application.yml" }
+      ],
+      "remote": {
+        "deployDir": "/opt/crm",
+        "stagingDir": "/tmp/dsh-deploy",
+        "backupDir": "/opt/backups/crm",
+        "backupMode": "tar",
+        "backupCompress": false,
+        "backupKeep": 10,
+        "preCommands": ["mkdir -p /opt/crm/conf"],
+        "stopCommand": "systemctl stop crm",
+        "startCommand": "systemctl start crm",
+        "statusCommand": "systemctl is-active crm",
+        "postCommands": [],
+        "healthCheck": {
+          "type": "http",
+          "url": "http://127.0.0.1:8080/actuator/health",
+          "expectedStatus": "200",
+          "retries": 12,
+          "intervalSec": 5,
+          "timeoutSec": 5
+        }
+      }
+    },
+    "test-web": {
+      "host": "192.168.1.20",
+      "port": 22,
+      "username": "deploy",
+      "auth": { "type": "key", "privateKey": "C:/Users/you/.ssh/id_ed25519", "passphrase": "" },
+      "sudo": false,
+      "type": "frontend",
+      "build": { "command": "npm run build", "cwd": "" },
+      "package": { "local": "dist", "remoteName": "web.zip" },
+      "remote": {
+        "deployDir": "/usr/share/nginx/html/crm-web",
+        "stagingDir": "/tmp/dsh-deploy",
+        "backupDir": "/opt/backups/crm-web",
+        "backupMode": "copy",
+        "backupKeep": 5,
+        "clean": false,
+        "unzipTool": "auto",
+        "uploadConcurrency": 64,
+        "uploadChunkSize": 262144,
+        "preCommands": [],
+        "stopCommand": "",
+        "startCommand": "",
+        "statusCommand": "systemctl is-active nginx",
+        "postCommands": [],
+        "healthCheck": {
+          "type": "http",
+          "url": "http://127.0.0.1/index.html",
+          "expectedStatus": "200",
+          "retries": 6,
+          "intervalSec": 3,
+          "timeoutSec": 5
+        }
+      }
+    }
+  }
+}

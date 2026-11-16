@@ -1,0 +1,7 @@
+node_modules/
+__pycache__/
+*.pyc
+tests/virtual-root/
+tests/.fake.pid
+.dsh-deploy.json
+*.log
