@@ -1,8 +1,12 @@
 {
   "name": "dsh-server-deploy",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "DSH plugin bundle: one-click server deployment to any environment for single-service, frontend, microservices and cluster projects (per-service servers, zero local runtime deps) plus a right-side deployment status panel.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/max-holo/dsh-server-deploy.git"
+  },
   "author": "max",
   "icon": "./icon.svg",
   "keywords": [
