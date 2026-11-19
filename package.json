@@ -1,6 +1,6 @@
 {
   "name": "dsh-server-deploy",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "DSH plugin bundle: one-shot server deploys from chat — build, upload, backup, restart and health check for single-service, frontend, microservices and cluster projects, to any environment, with a live deployment panel.",
   "license": "MIT",
   "repository": {

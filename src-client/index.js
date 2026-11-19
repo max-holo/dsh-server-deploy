@@ -18,7 +18,10 @@ export const inject = ['slots']
 const GITHUB_REPO = 'https://github.com/max-holo/dsh-server-deploy'
 const GITHUB_MARK_PATH = 'M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z'
 
-/** 应用部署 · 关于页：设置里的一页（版本 + GitHub + npm 下载统计）。 */
+/** npm mark（simple-icons，currentColor 跟随主题文字色）。 */
+const NPM_MARK_PATH = 'M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z'
+
+/** 应用部署 · 设置页：标题 + npm 累计下载 + GitHub，一行说明。 */
 function DeployAboutPage() {
   const [d, setD] = React.useState(null)
   React.useEffect(() => {
@@ -29,38 +32,39 @@ function DeployAboutPage() {
       .catch(() => { if (!stopped) setD({ ok: false }) })
     return () => { stopped = true }
   }, [])
-  const fmt = (n) => (typeof n === 'number' ? n.toLocaleString('en-US') : '—')
+  const total = d !== null && d.ok && typeof d.total === 'number' ? d.total : null
   const label = { fontSize: '12px', color: 'var(--dsw-alias-label-secondary, #8a8a92)' }
-  const children = [
-    React.createElement('div', { style: { display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px' }, key: 'head' },
+  return React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '480px', paddingBottom: '24px' } },
+    React.createElement('div', { style: { display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' } },
       React.createElement('div', { style: { fontSize: '15px', fontWeight: 600 } }, '应用部署'),
-      React.createElement('a', {
-        href: GITHUB_REPO,
-        target: '_blank',
-        rel: 'noopener noreferrer',
-        title: 'GitHub：max-holo/dsh-server-deploy',
-        'aria-label': '在 GitHub 上查看本项目',
-        style: { display: 'flex', alignItems: 'center', marginLeft: 'auto', color: 'var(--dsw-alias-label-secondary, #8a8a92)' },
-      }, React.createElement('svg', { viewBox: '0 0 16 16', width: '16', height: '16', fill: 'currentColor', 'aria-hidden': 'true' },
-        React.createElement('path', { d: GITHUB_MARK_PATH }))),
+      React.createElement('div', { style: { display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', marginLeft: 'auto' } },
+        total !== null
+          ? React.createElement('a', {
+              href: 'https://www.npmjs.com/package/dsh-server-deploy',
+              target: '_blank',
+              rel: 'noopener noreferrer',
+              title: 'npm：dsh-server-deploy · 累计下载 ' + total.toLocaleString('en-US'),
+              'aria-label': '在 npm 上查看本包',
+              style: { display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--dsw-alias-label-secondary, #8a8a92)', textDecoration: 'none' },
+            },
+            React.createElement('svg', { viewBox: '0 0 24 24', width: '13', height: '13', fill: 'currentColor', 'aria-hidden': 'true' }, React.createElement('path', { d: NPM_MARK_PATH })),
+            React.createElement('span', { style: { fontSize: '12px', fontVariantNumeric: 'tabular-nums' } }, total.toLocaleString('en-US')))
+          : null,
+        React.createElement('a', {
+          href: GITHUB_REPO,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          title: 'GitHub：max-holo/dsh-server-deploy',
+          'aria-label': '在 GitHub 上查看本项目',
+          style: { display: 'flex', alignItems: 'center', color: 'var(--dsw-alias-label-secondary, #8a8a92)' },
+        }, React.createElement('svg', { viewBox: '0 0 16 16', width: '16', height: '16', fill: 'currentColor', 'aria-hidden': 'true' },
+          React.createElement('path', { d: GITHUB_MARK_PATH }))),
+      ),
     ),
-    React.createElement('div', { style: { ...label, lineHeight: 1.6 }, key: 'intro' },
-      '在会话里说「部署到 test / uat / prod」即可一键发版：构建 → 上传 → 备份 → 停服 → 替换文件 / 解压前端 → 启服 → 健康检查；支持单机、前端、微服务、集群四种形态。'),
-    d === null
-      ? React.createElement('div', { style: label, key: 'loading' }, '⬇ npm 下载统计获取中…')
-      : React.createElement('div', { style: { fontSize: '13px' }, key: 'stats' },
-          d.ok
-            ? '⬇ npm 累计下载 ' + fmt(d.total) + ' · 最近一周 ' + fmt(d.lastWeek)
-            : '⬇ npm 下载统计暂不可用（网络原因，稍后再试）'),
-  ]
-  if (d !== null && typeof d.version === 'string' && d.version.length > 0) {
-    children.push(React.createElement('div', { style: label, key: 'version' }, '当前版本 v' + d.version))
-  }
-  if (d !== null && d.ok && typeof d.weekStart === 'string') {
-    children.push(React.createElement('div', { style: label, key: 'range' },
-      '统计区间 ' + (d.weekStart || '?') + ' ~ ' + (d.weekEnd || '?') + '，数据来自 api.npmjs.org，服务端缓存 30 分钟'))
-  }
-  return React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '480px', paddingBottom: '24px' } }, children)
+    React.createElement('div', { style: { ...label, lineHeight: 1.6 } },
+      '在会话里说「部署到 test / uat / prod」即可一键发版：构建 → 上传 → 备份 → 停启 → 健康检查。'
+      + (d !== null && typeof d.version === 'string' && d.version.length > 0 ? '（当前 v' + d.version + '）' : '')),
+  )
 }
 
 // terminalIds already opened in this page; survives component remounts so a
