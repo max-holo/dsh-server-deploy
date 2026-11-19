@@ -759,6 +759,75 @@ module.exports = {
     }
 
     if (webServer !== undefined) {
+      // ---- npm download stats (settings page) ------------------------------
+      // /api/dsh-deploy/downloads: last-week point + the summed range since
+      // the package's first publish. Success caches 30 min, failure 5 min.
+      const NPM_PACKAGE = 'dsh-server-deploy'
+      const NPM_SINCE = '2026-10-22' // time.created of the npm package
+      let downloadsCache = null // { at, ok, data }
+      let pkgVersion = null
+      try { pkgVersion = require('./package.json').version } catch (ignored) { /* unpublished layout */ }
+      function fetchJsonFrom(url, timeoutMs) {
+        return new Promise((resolve, reject) => {
+          const req = https.get(url, (res2) => {
+            if (res2.statusCode !== 200) {
+              res2.resume()
+              reject(new Error('HTTP ' + res2.statusCode + ' from ' + url))
+              return
+            }
+            let d = ''
+            res2.on('data', (c) => { d += c })
+            res2.on('end', () => {
+              try { resolve(JSON.parse(d)) } catch (err) { reject(err) }
+            })
+          })
+          req.on('error', reject)
+          req.setTimeout(timeoutMs, () => { req.destroy(new Error('fetch timeout')) })
+        })
+      }
+      async function fetchDownloads() {
+        const today = new Date().toISOString().slice(0, 10)
+        const [week, range] = await Promise.all([
+          fetchJsonFrom(`https://api.npmjs.org/downloads/point/last-week/${NPM_PACKAGE}`, 8000),
+          fetchJsonFrom(`https://api.npmjs.org/downloads/range/${NPM_SINCE}:${today}/${NPM_PACKAGE}`, 8000),
+        ])
+        let total = 0
+        if (Array.isArray(range.downloads)) {
+          for (const day of range.downloads) total += Number(day.downloads) || 0
+        }
+        return {
+          lastWeek: Number(week.downloads) || 0,
+          total,
+          since: NPM_SINCE,
+          weekStart: typeof week.start === 'string' ? week.start : null,
+          weekEnd: typeof week.end === 'string' ? week.end : null,
+        }
+      }
+      ctx.effect(() => webServer.register({
+        kind: 'exact',
+        path: '/api/dsh-deploy/downloads',
+        handler(req, res) {
+          const serve = (payload) => {
+            res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
+            res.end(JSON.stringify({ ...payload, version: pkgVersion }))
+          }
+          const fresh = downloadsCache !== null
+            && Date.now() - downloadsCache.at < (downloadsCache.ok ? 1800000 : 300000)
+          if (fresh) {
+            serve({ ok: downloadsCache.ok, ...downloadsCache.data, cachedAt: downloadsCache.at })
+            return
+          }
+          fetchDownloads().then((data) => {
+            downloadsCache = { at: Date.now(), ok: true, data }
+            serve({ ok: true, ...data, cachedAt: downloadsCache.at })
+          }).catch((err) => {
+            const message = String(err && err.message ? err.message : err)
+            downloadsCache = { at: Date.now(), ok: false, data: { error: message } }
+            serve({ ok: false, error: message, cachedAt: downloadsCache.at })
+          })
+        },
+      }))
+
       ctx.effect(() => webServer.register({
         kind: 'exact',
         path: '/api/dsh-deploy/status',
