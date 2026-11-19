@@ -24,7 +24,14 @@ const NPM_MARK_PATH = 'M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.7
 /** 应用部署 · 设置页：标题 + npm 累计下载 + GitHub，一行说明。 */
 function DeployAboutPage() {
   const [d, setD] = React.useState(null)
+  // 被 DSH 官方插件详情页内嵌时（[data-plugin-config] 容器）只显示说明行。
+  const rootRef = React.useRef(null)
+  const [embedded, setEmbedded] = React.useState(false)
   React.useEffect(() => {
+    const el = rootRef.current
+    if (el !== null && el !== undefined && typeof el.closest === 'function') {
+      setEmbedded(el.closest('[data-plugin-config]') !== null)
+    }
     let stopped = false
     fetch('/api/dsh-deploy/downloads')
       .then((r) => r.json())
@@ -34,10 +41,10 @@ function DeployAboutPage() {
   }, [])
   const total = d !== null && d.ok && typeof d.total === 'number' ? d.total : null
   const label = { fontSize: '12px', color: 'var(--dsw-alias-label-secondary, #8a8a92)' }
-  return React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '480px', paddingBottom: '24px' } },
+  return React.createElement('div', { ref: rootRef, style: { display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '480px', paddingBottom: '24px' } },
     React.createElement('div', { style: { display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' } },
       React.createElement('div', { style: { fontSize: '15px', fontWeight: 600 } }, '应用部署'),
-      React.createElement('div', { style: { display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', marginLeft: 'auto' } },
+      embedded ? null : React.createElement('div', { style: { display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', marginLeft: 'auto' } },
         total !== null
           ? React.createElement('a', {
               href: 'https://www.npmjs.com/package/dsh-server-deploy',
